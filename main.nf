@@ -2,6 +2,8 @@ params.samplesheet = null
 params.mhcquant_outdir = null
 params.join_key = "sample"
 
+// TODO: Check params
+// TODO: Check output file! Warn or error if empty!
 workflow mhcquant2epp {
     main:
     // --- 1. Parse samplesheet → [join_key_value, meta_map]
