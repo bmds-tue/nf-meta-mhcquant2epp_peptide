@@ -1,0 +1,31 @@
+nextflow_workflow {
+    name "Test mhcquant2epp workflow"
+    script "main.nf"
+    workflow "mhcquant2epp"
+
+    test("joins samplesheet with mhcquant TSVs, excludes unmatched files") {
+        when {
+            params {
+                samplesheet     = "${projectDir}/test/testdata/epp_samplesheet.tsv"
+                mhcquant_outdir = "${projectDir}/test/testdata/out_mhcquant"
+                outdir          = "${outputDir}"
+            }
+        }
+        then {
+            assert workflow.success
+
+            def lines = path("${outputDir}/samplesheet.csv").readLines()
+
+            // header + one row per samplesheet entry that matched a TSV
+            assert lines.size() == 3
+            assert lines[0] == "sample,alleles,mhc_calss,filename"
+
+            // matched samples appear with correct metadata
+            assert lines.any { it.startsWith("PBMC007_A,A*02:01;A*31:01;B*18:01;B*40:01,I,") && it.endsWith("PBMC007_A.tsv") }
+            assert lines.any { it.startsWith("PBMC009_B,A*24:02;A*32:01;B*07:02;B*14:02,I,") && it.endsWith("PBMC009_B.tsv") }
+
+            // PBMC009_A is not in the samplesheet and must be absent from output
+            assert !lines.any { it.contains("PBMC009_A") }
+        }
+    }
+}
