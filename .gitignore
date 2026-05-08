@@ -1,3 +1,6 @@
+# Specific files
+test_out
+
 # Nextflow files
 .nextflow
 .nextflow.log*
