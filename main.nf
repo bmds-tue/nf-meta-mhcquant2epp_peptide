@@ -34,10 +34,14 @@ workflow mhcquant2epp {
         sort: true,
         storeDir: "${params.outdir}")
         { meta ->
-            ["samplesheet.csv", "sample,alleles,mhc_calss,filename\n${meta.sample},${meta.alleles},${meta.mhc_class},${meta.filename}\n"]
+            ["samplesheet.csv", "sample,alleles,mhc_class,filename\n${meta.sample},${meta.alleles},${meta.mhc_class},${meta.filename}\n"]
         }
+
+    emit:
+    samplesheet = csv_ch
 }
 
 workflow  {
     mhcquant2epp()
+
 }
