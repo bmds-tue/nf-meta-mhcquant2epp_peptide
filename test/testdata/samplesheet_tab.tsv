@@ -1,0 +1,4 @@
+ID	Sample	Condition	ReplicateFileName	alleles	mhc_class
+1	PBMC007	A	PBMC007_A_rep1.raw	A*02:01;A*31:01;B*18:01;B*40:01	I
+2	PBMC007	A	PBMC007_A_rep2.raw	A*02:01;A*31:01;B*18:01;B*40:01	I
+3	PBMC009	B	PBMC009_B_rep1.raw	A*24:02;A*32:01;B*07:02;B*14:02	I

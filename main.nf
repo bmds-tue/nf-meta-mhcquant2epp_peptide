@@ -11,13 +11,20 @@ params.condition_col   = "Condition"
 params.alleles_col     = "alleles"
 params.mhc_class_col   = "mhc_class"
 
+// Delimiter is auto-detected from the samplesheet's extension, since real mhcquant
+// samplesheets are commonly tab-separated despite splitCsv defaulting to comma.
+def detectSep(path) {
+    def name = path.toString().toLowerCase()
+    return (name.endsWith('.tsv') || name.endsWith('.tab')) ? '\t' : ','
+}
+
 workflow mhcquant2epp {
     main:
     // --- 1. Parse samplesheet, deriving the Sample_Condition key ourselves
     //        rather than requiring it as a pre-existing column.
     parsed_ch = Channel
         .fromPath(params.samplesheet, checkIfExists: true)
-        .splitCsv(header: true)
+        .splitCsv(header: true, sep: detectSep(params.samplesheet))
         .map { row ->
             def key = "${row[params.sample_col]}_${row[params.condition_col]}"
             tuple(key, [
@@ -37,10 +44,15 @@ workflow mhcquant2epp {
             "${key}\t${variants.join(' | ')}"
         }
 
+    // collectFile must always receive exactly one item -- a channel that emits zero
+    // items (e.g. via a .filter{} that drops everything) never signals completion to
+    // collectFile's underlying FileCollector, hanging the whole session indefinitely
+    // even though every other channel has already finished. toSortedList() always
+    // emits exactly one (possibly empty) list, so map it straight to file content --
+    // an empty string when there are no conflicts -- instead of filtering to nothing.
     conflicts_ch
         .toSortedList()
-        .map { rows -> rows.isEmpty() ? null : (["sample_condition\tconflicting_alleles_mhc_class"] + rows).join('\n') + '\n' }
-        .filter { it != null }
+        .map { rows -> rows.isEmpty() ? '' : (["sample_condition\tconflicting_alleles_mhc_class"] + rows).join('\n') + '\n' }
         .collectFile(name: 'conflicts.tsv', storeDir: "${params.outdir}")
 
     // --- 3. Collapse replicate-level rows down to one row per Sample_Condition.

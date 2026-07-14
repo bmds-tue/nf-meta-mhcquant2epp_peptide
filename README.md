@@ -64,10 +64,10 @@ the join are guaranteed to agree without a separately-authored key column.
   TSV. Rows are sorted by `sample`. A `Sample_Condition` present in only one of the two
   inputs (samplesheet or `mhcquant_outdir`) is silently excluded, matching mhcquant's own
   filtering semantics.
-- **`conflicts.tsv`** -- written only if two or more rows share a derived
-  `Sample_Condition` key but disagree on `alleles`/`mhc_class` (a real data-entry error,
-  not the expected replicate-row duplication). Absent when there are no conflicts. The
-  main `samplesheet.csv` still gets exactly one row for a conflicting key (the
+- **`conflicts.tsv`** -- always written, but empty (0 bytes) unless two or more rows
+  share a derived `Sample_Condition` key and disagree on `alleles`/`mhc_class` (a real
+  data-entry error, not the expected replicate-row duplication). The main
+  `samplesheet.csv` still gets exactly one row for a conflicting key (the
   first-occurrence value) -- the conflict is surfaced for follow-up, not silently
   resolved by dropping the row.
 

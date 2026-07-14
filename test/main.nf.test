@@ -45,4 +45,32 @@ nextflow_workflow {
             assert !conflicts.any { it.startsWith("PBMC009_B") }
         }
     }
+
+    test("auto-detects tab delimiter for a genuinely tab-separated .tsv samplesheet") {
+        when {
+            params {
+                samplesheet     = "${projectDir}/test/testdata/samplesheet_tab.tsv"
+                mhcquant_outdir = "${projectDir}/test/testdata/out_mhcquant"
+                outdir          = "${outputDir}"
+            }
+        }
+        then {
+            assert workflow.success
+
+            def lines = path("${outputDir}/samplesheet.csv").readLines()
+
+            // if the tab delimiter weren't detected, splitCsv would default to comma,
+            // every row would parse as a single unmatched column, and the join would
+            // silently produce zero rows (header only)
+            assert lines.size() == 3
+            assert lines[0] == "sample,alleles,mhc_class,filename"
+            assert lines.any { it.startsWith("PBMC007_A,A*02:01;A*31:01;B*18:01;B*40:01,I,") && it.endsWith("PBMC007_A.tsv") }
+            assert lines.any { it.startsWith("PBMC009_B,A*24:02;A*32:01;B*07:02;B*14:02,I,") && it.endsWith("PBMC009_B.tsv") }
+
+            // conflicts.tsv is always written, but empty (0 bytes) when there are no
+            // conflicts -- collectFile must never be fed a channel with zero items, or
+            // the whole session hangs on shutdown even though every file is correct
+            assert path("${outputDir}/conflicts.tsv").readLines().isEmpty()
+        }
+    }
 }
