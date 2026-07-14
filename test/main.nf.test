@@ -73,4 +73,20 @@ nextflow_workflow {
             assert path("${outputDir}/conflicts.tsv").readLines().isEmpty()
         }
     }
+
+    test("fails fast when a configured column is missing from the samplesheet") {
+        when {
+            params {
+                samplesheet     = "${projectDir}/test/testdata/samplesheet_missing_col.csv"
+                mhcquant_outdir = "${projectDir}/test/testdata/out_mhcquant"
+                outdir          = "${outputDir}"
+            }
+        }
+        then {
+            // no configured column value should ever silently resolve to null --
+            // a missing/misnamed column must raise immediately with a clear message
+            assert workflow.failed
+            assert workflow.stdout.any { it.contains("missing required column") && it.contains("Mhc_class") }
+        }
+    }
 }

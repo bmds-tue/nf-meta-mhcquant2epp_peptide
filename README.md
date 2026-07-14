@@ -33,25 +33,28 @@ nextflow run main.nf \
 ```
 
 `--samplesheet` can be the exact same file passed to mhcquant's own `--input`, as long
-as `alleles` and `mhc_class` columns have been added -- mhcquant's schema has no
+as `Alleles` and `Mhc_class` columns have been added -- mhcquant's schema has no
 `additionalProperties: false`, so the extra columns are safely ignored by mhcquant.
 
 ## Params
 
 | Param | Default | Description |
 |---|---|---|
-| `samplesheet` | (required) | Path to the samplesheet mhcquant's `--input` consumes (or a superset of it). One row per raw MS replicate file. Always parsed as comma-separated. |
+| `samplesheet` | (required) | Path to the samplesheet mhcquant's `--input` consumes (or a superset of it). One row per raw MS replicate file. Delimiter is auto-detected from the file extension (`.tsv`/`.tab` → tab, anything else → comma). |
 | `mhcquant_outdir` | (required) | Directory containing mhcquant's per-`Sample_Condition` peptide TSVs, e.g. `HLE_p1011.tsv`. |
 | `outdir` | (required) | Directory `samplesheet.csv` (and `conflicts.tsv`, if any) are written to. |
 | `sample_col` | `Sample` | Column holding the cell line / sample name. |
 | `condition_col` | `Condition` | Column holding the plasmid/condition name. |
-| `alleles_col` | `alleles` | Column holding the semicolon-separated HLA allele list, e.g. `A*02:01;A*31:01;B*18:01;B*40:01`. |
-| `mhc_class_col` | `mhc_class` | Column holding the MHC class (`I` or `II`). |
+| `alleles_col` | `Alleles` | Column holding the semicolon-separated HLA allele list, e.g. `A*02:01;A*31:01;B*18:01;B*40:01`. |
+| `mhc_class_col` | `Mhc_class` | Column holding the MHC class (`I` or `II`). |
 
-`sample_col`/`condition_col` default to mhcquant's own required casing, and
-`alleles_col`/`mhc_class_col` default to lowercase (they aren't part of mhcquant's
-schema, so there's no casing constraint forcing a particular choice) -- so the same
-samplesheet mhcquant consumes can be handed to this adapter directly.
+All four column-name params default to mhcquant's own required casing, or the same
+casing convention mhcquant's community datasets commonly use for the allele/class
+columns it doesn't itself define -- so the same samplesheet mhcquant consumes can
+usually be handed to this adapter directly, with just the two extra columns added.
+Every run fails fast with a clear error if any of the four configured columns isn't
+actually present in the samplesheet's header, rather than silently reading `null` for
+every row.
 
 `"${row[sample_col]}_${row[condition_col]}"` is the derived join key, using the same
 string construction mhcquant's own output filenames are parsed with, so both sides of

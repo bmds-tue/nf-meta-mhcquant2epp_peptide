@@ -20,11 +20,22 @@ def detectSep(path) {
 
 workflow mhcquant2epp {
     main:
+    // --- 0. Fail fast if a configured column doesn't actually exist in the
+    //        samplesheet header, rather than silently reading null for every row.
+    def sheetPath = file(params.samplesheet, checkIfExists: true)
+    def sheetSep  = detectSep(sheetPath)
+    def sheetCols = sheetPath.readLines()[0].split(sheetSep, -1)*.trim()
+    def requiredCols = [params.sample_col, params.condition_col, params.alleles_col, params.mhc_class_col].unique()
+    def missingCols = requiredCols.findAll { !(it in sheetCols) }
+    if (missingCols) {
+        error "samplesheet '${params.samplesheet}' is missing required column(s): ${missingCols.join(', ')} (found: ${sheetCols.join(', ')})"
+    }
+
     // --- 1. Parse samplesheet, deriving the Sample_Condition key ourselves
     //        rather than requiring it as a pre-existing column.
     parsed_ch = Channel
-        .fromPath(params.samplesheet, checkIfExists: true)
-        .splitCsv(header: true, sep: detectSep(params.samplesheet))
+        .fromPath(sheetPath)
+        .splitCsv(header: true, sep: sheetSep)
         .map { row ->
             def key = "${row[params.sample_col]}_${row[params.condition_col]}"
             tuple(key, [

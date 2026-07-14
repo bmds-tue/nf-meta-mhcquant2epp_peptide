@@ -15,7 +15,7 @@
                 "samplesheet": {
                     "type": "string",
                     "description": "Path to the samplesheet mhcquant's --input consumes (or a superset of it).",
-                    "help_text": "One row per raw MS replicate file, at minimum containing the columns named by sample_col/condition_col/alleles_col/mhc_class_col. The SAME file handed to mhcquant works directly as long as alleles/mhc_class columns are added -- mhcquant's own schema has no additionalProperties:false, so the extra columns are safely ignored by mhcquant. Always parsed as comma-separated, regardless of file extension.",
+                    "help_text": "One row per raw MS replicate file, at minimum containing the columns named by sample_col/condition_col/alleles_col/mhc_class_col -- a missing/misnamed column fails fast with a clear error rather than silently reading null. The SAME file handed to mhcquant works directly as long as Alleles/Mhc_class columns are added -- mhcquant's own schema has no additionalProperties:false, so the extra columns are safely ignored by mhcquant. Delimiter is auto-detected from the file extension (.tsv/.tab -> tab, otherwise comma).",
                     "format": "file-path",
                     "exists": true,
                     "fa_icon": "fas fa-file-csv",
@@ -42,7 +42,7 @@
             "title": "Column name options",
             "type": "object",
             "fa_icon": "fas fa-columns",
-            "description": "Names of the samplesheet columns to read. Defaults match mhcquant's own required casing for sample_col/condition_col, so the same samplesheet mhcquant consumes can be handed to this adapter unmodified once alleles/mhc_class columns are added.",
+            "description": "Names of the samplesheet columns to read. Defaults match mhcquant's own required casing for sample_col/condition_col, so the same samplesheet mhcquant consumes can be handed to this adapter unmodified once Alleles/Mhc_class columns are added. A missing/misnamed column fails fast with a clear error instead of silently reading null.",
             "properties": {
                 "sample_col": {
                     "type": "string",
@@ -59,14 +59,14 @@
                 },
                 "alleles_col": {
                     "type": "string",
-                    "default": "alleles",
+                    "default": "Alleles",
                     "description": "Column holding the semicolon-separated HLA allele list, e.g. 'A*02:01;A*31:01;B*18:01;B*40:01'.",
-                    "help_text": "Not part of mhcquant's schema, so lowercase by default rather than following mhcquant's casing -- there's no casing constraint forcing a particular choice.",
+                    "help_text": "Not part of mhcquant's own required schema, so there's no casing constraint forcing a particular choice -- defaults to the casing convention commonly used alongside mhcquant's own Sample/Condition columns.",
                     "fa_icon": "fas fa-dna"
                 },
                 "mhc_class_col": {
                     "type": "string",
-                    "default": "mhc_class",
+                    "default": "Mhc_class",
                     "description": "Column holding the MHC class ('I' or 'II').",
                     "fa_icon": "fas fa-layer-group"
                 }
