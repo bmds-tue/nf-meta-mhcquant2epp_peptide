@@ -8,8 +8,8 @@ params.mhcquant_outdir = null
 params.outdir          = null
 params.sample_col      = "Sample"
 params.condition_col   = "Condition"
-params.alleles_col     = "alleles"
-params.mhc_class_col   = "mhc_class"
+params.alleles_col     = "Alleles"
+params.mhc_class_col   = "Mhc_class"
 
 // Delimiter is auto-detected from the samplesheet's extension, since real mhcquant
 // samplesheets are commonly tab-separated despite splitCsv defaulting to comma.
