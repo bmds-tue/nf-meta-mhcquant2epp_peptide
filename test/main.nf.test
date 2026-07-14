@@ -3,10 +3,10 @@ nextflow_workflow {
     script "main.nf"
     workflow "mhcquant2epp"
 
-    test("joins samplesheet with mhcquant TSVs, excludes unmatched files") {
+    test("derives Sample_Condition key, collapses replicate rows, excludes unmatched files, and reports conflicts") {
         when {
             params {
-                samplesheet     = "${projectDir}/test/testdata/epp_samplesheet.tsv"
+                samplesheet     = "${projectDir}/test/testdata/samplesheet.csv"
                 mhcquant_outdir = "${projectDir}/test/testdata/out_mhcquant"
                 outdir          = "${outputDir}"
             }
@@ -16,16 +16,33 @@ nextflow_workflow {
 
             def lines = path("${outputDir}/samplesheet.csv").readLines()
 
-            // header + one row per samplesheet entry that matched a TSV
-            assert lines.size() == 3
-            assert lines[0] == "sample,alleles,mhc_calss,filename"
+            // header + one row per unique Sample_Condition that matched a TSV,
+            // NOT one row per replicate row in the input samplesheet
+            assert lines.size() == 4
+            assert lines[0] == "sample,alleles,mhc_class,filename"
 
-            // matched samples appear with correct metadata
+            // replicate rows for the same Sample_Condition collapse to one row
             assert lines.any { it.startsWith("PBMC007_A,A*02:01;A*31:01;B*18:01;B*40:01,I,") && it.endsWith("PBMC007_A.tsv") }
             assert lines.any { it.startsWith("PBMC009_B,A*24:02;A*32:01;B*07:02;B*14:02,I,") && it.endsWith("PBMC009_B.tsv") }
 
-            // PBMC009_A is not in the samplesheet and must be absent from output
+            // PBMC009_A has an mhcquant output file but no samplesheet row -- must be absent
             assert !lines.any { it.contains("PBMC009_A") }
+
+            // PBMC010_C has conflicting replicate rows (mhc_class I vs II) -- still gets
+            // exactly one row in the main output (first-occurrence value), not silently dropped
+            assert lines.any { it.startsWith("PBMC010_C,A*11:01;A*33:01;B*15:01;B*58:01,I,") && it.endsWith("PBMC010_C.tsv") }
+
+            // ...and the disagreement is surfaced in a conflicts report, not silently swallowed
+            def conflicts = path("${outputDir}/conflicts.tsv").readLines()
+            assert conflicts.size() == 2
+            assert conflicts[0] == "sample_condition\tconflicting_alleles_mhc_class"
+            assert conflicts[1].startsWith("PBMC010_C\t")
+            assert conflicts[1].contains("A*11:01;A*33:01;B*15:01;B*58:01/I")
+            assert conflicts[1].contains("A*11:01;A*33:01;B*15:01;B*58:01/II")
+
+            // no conflict for the genuinely-duplicated (non-disagreeing) replicate rows
+            assert !conflicts.any { it.startsWith("PBMC007_A") }
+            assert !conflicts.any { it.startsWith("PBMC009_B") }
         }
     }
 }
