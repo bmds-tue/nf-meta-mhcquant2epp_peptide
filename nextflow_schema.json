@@ -1,0 +1,95 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/bmds-tue/nf-meta-mhcquant2epp_peptide/main/nextflow_schema.json",
+    "title": "nf-meta-mhcquant2epp_peptide pipeline parameters",
+    "description": "Adapter that turns nf-core/mhcquant's own samplesheet plus its per-Sample_Condition peptide TSV output into the sample,alleles,mhc_class,filename samplesheet nf-core/epitopeprediction requires as --input.",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "The mhcquant samplesheet, its peptide-output directory, and where the epitopeprediction samplesheet is written.",
+            "required": ["samplesheet", "mhcquant_outdir", "outdir"],
+            "properties": {
+                "samplesheet": {
+                    "type": "string",
+                    "description": "Path to the samplesheet mhcquant's --input consumes (or a superset of it).",
+                    "help_text": "One row per raw MS replicate file, at minimum containing the columns named by sample_col/condition_col/alleles_col/mhc_class_col. The SAME file handed to mhcquant works directly as long as alleles/mhc_class columns are added -- mhcquant's own schema has no additionalProperties:false, so the extra columns are safely ignored by mhcquant. Always parsed as comma-separated, regardless of file extension.",
+                    "format": "file-path",
+                    "exists": true,
+                    "fa_icon": "fas fa-file-csv",
+                    "errorMessage": "samplesheet must be a valid, existing file path."
+                },
+                "mhcquant_outdir": {
+                    "type": "string",
+                    "description": "Directory containing mhcquant's per-Sample_Condition peptide TSVs (e.g. HLE_p1011.tsv).",
+                    "format": "directory-path",
+                    "exists": true,
+                    "fa_icon": "fas fa-folder-open",
+                    "errorMessage": "mhcquant_outdir must be a valid, existing directory path."
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "minLength": 1,
+                    "description": "Directory the output samplesheet.csv (and conflicts.tsv, if any) are written to.",
+                    "fa_icon": "fas fa-folder-open"
+                }
+            }
+        },
+        "column_options": {
+            "title": "Column name options",
+            "type": "object",
+            "fa_icon": "fas fa-columns",
+            "description": "Names of the samplesheet columns to read. Defaults match mhcquant's own required casing for sample_col/condition_col, so the same samplesheet mhcquant consumes can be handed to this adapter unmodified once alleles/mhc_class columns are added.",
+            "properties": {
+                "sample_col": {
+                    "type": "string",
+                    "default": "Sample",
+                    "description": "Column holding the cell line / sample name.",
+                    "help_text": "Combined with condition_col's value as '<sample_col>_<condition_col>' to derive the Sample_Condition key mhcquant's per-condition output filenames are keyed by.",
+                    "fa_icon": "fas fa-vial"
+                },
+                "condition_col": {
+                    "type": "string",
+                    "default": "Condition",
+                    "description": "Column holding the plasmid/condition name.",
+                    "fa_icon": "fas fa-flask"
+                },
+                "alleles_col": {
+                    "type": "string",
+                    "default": "alleles",
+                    "description": "Column holding the semicolon-separated HLA allele list, e.g. 'A*02:01;A*31:01;B*18:01;B*40:01'.",
+                    "help_text": "Not part of mhcquant's schema, so lowercase by default rather than following mhcquant's casing -- there's no casing constraint forcing a particular choice.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "mhc_class_col": {
+                    "type": "string",
+                    "default": "mhc_class",
+                    "description": "Column holding the MHC class ('I' or 'II').",
+                    "fa_icon": "fas fa-layer-group"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-question-circle",
+            "description": "Less common options.",
+            "properties": {
+                "help": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Display help text.",
+                    "fa_icon": "fas fa-question-circle"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {"$ref": "#/$defs/input_output_options"},
+        {"$ref": "#/$defs/column_options"},
+        {"$ref": "#/$defs/generic_options"}
+    ]
+}

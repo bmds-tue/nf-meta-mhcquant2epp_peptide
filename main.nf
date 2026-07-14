@@ -1,5 +1,8 @@
 nextflow.enable.dsl = 2
 
+include { validateParameters; paramsHelp } from 'plugin/nf-schema'
+
+params.help            = false
 params.samplesheet     = null   // the SAME file mhcquant's --input uses (or a superset of it)
 params.mhcquant_outdir = null
 params.outdir          = null
@@ -74,5 +77,11 @@ workflow mhcquant2epp {
 }
 
 workflow {
+    if (params.help) {
+        log.info paramsHelp(command: "nextflow run main.nf --samplesheet <path> --mhcquant_outdir <dir> --outdir <dir>")
+        exit 0
+    }
+    validateParameters()
+
     mhcquant2epp()
 }
